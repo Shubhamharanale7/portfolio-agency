@@ -149,7 +149,7 @@ export default function Hero() {
               background: p.color,
               boxShadow: `0 0 6px ${p.color}`,
             }}
-            animate={{ y: [0, -window?.innerHeight ?? -800, 0], opacity: [0, 1, 0] }}
+            animate={{ y: [0, -800, 0], opacity: [0, 1, 0] }}
             transition={{ duration: p.duration, delay: p.delay, repeat: Infinity, ease: 'linear' }}
           />
         ))}
