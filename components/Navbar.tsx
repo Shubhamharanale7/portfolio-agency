@@ -35,7 +35,7 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         {/* Logo */}
-        <a href="#" className="flex items-center gap-2">
+        <a href="/" className="flex items-center gap-2">
           <div style={{
             width: 36, height: 36, borderRadius: 8,
             background: 'linear-gradient(135deg,#6C63FF,#00E5FF)',
