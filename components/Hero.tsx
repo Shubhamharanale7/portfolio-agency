@@ -1,8 +1,46 @@
 'use client'
-import { useEffect, useRef } from 'react'
-import { motion } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowRight, Calendar } from 'lucide-react'
 
+// ── Slot Machine Text ──────────────────────────────────────────
+function SlotMachineText({ words, interval = 2500 }: { words: string[]; interval?: number }) {
+  const [index, setIndex] = useState(0)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % words.length)
+    }, interval)
+    return () => clearInterval(timer)
+  }, [words.length, interval])
+
+  return (
+    <span
+      className="relative inline-block overflow-visible"
+      style={{ perspective: '600px', verticalAlign: 'bottom' }}
+    >
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.span
+          key={words[index]}
+          initial={{ rotateX: 90, opacity: 0, y: '40%' }}
+          animate={{ rotateX: 0, opacity: 1, y: '0%' }}
+          exit={{ rotateX: -90, opacity: 0, y: '-40%' }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          style={{
+            display: 'inline-block',
+            transformStyle: 'preserve-3d',
+            transformOrigin: 'center center',
+          }}
+          className="gradient-text"
+        >
+          {words[index]}
+        </motion.span>
+      </AnimatePresence>
+    </span>
+  )
+}
+
+// ── Particles ─────────────────────────────────────────────────
 const PARTICLES = Array.from({ length: 60 }, (_, i) => ({
   id: i,
   x: Math.random() * 100,
@@ -12,6 +50,7 @@ const PARTICLES = Array.from({ length: 60 }, (_, i) => ({
   color: ['#6C63FF', '#00E5FF', '#00FF9C'][Math.floor(Math.random() * 3)],
 }))
 
+// ── Globe Canvas ───────────────────────────────────────────────
 function GlobeCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animRef = useRef<number>()
@@ -49,7 +88,6 @@ function GlobeCanvas() {
       ctx!.clearRect(0, 0, W, H)
       angle += 0.004 + mouseRef.current.x * 0.002
 
-      // Glow bg
       const g = ctx!.createRadialGradient(cx, cy, 0, cx, cy, R + 40)
       g.addColorStop(0, 'rgba(108,99,255,0.08)')
       g.addColorStop(1, 'rgba(0,229,255,0.02)')
@@ -58,7 +96,6 @@ function GlobeCanvas() {
       ctx!.fillStyle = g
       ctx!.fill()
 
-      // Draw dots
       const visible: { x: number; y: number; z: number }[] = []
       for (const { lat, lng } of dots) {
         const latR = (lat * Math.PI) / 180
@@ -69,36 +106,29 @@ function GlobeCanvas() {
         visible.push({ x, y, z })
       }
 
-      // Sort by z
       const sorted = visible.map((v, i) => ({ ...v, i })).sort((a, b) => b.z - a.z)
 
       for (const { x, y, z } of sorted) {
         const brightness = (z + R) / (2 * R)
         const size = brightness * 2.5 + 0.5
         const alpha = brightness * 0.8 + 0.1
-
         const px = cx + x
         const py = cy - y
-
         ctx!.beginPath()
         ctx!.arc(px, py, size, 0, Math.PI * 2)
-
-        if (z > 0) {
-          ctx!.fillStyle = `rgba(0,229,255,${alpha})`
-        } else {
-          ctx!.fillStyle = `rgba(108,99,255,${alpha * 0.4})`
-        }
+        ctx!.fillStyle = z > 0
+          ? `rgba(0,229,255,${alpha})`
+          : `rgba(108,99,255,${alpha * 0.4})`
         ctx!.fill()
       }
 
-      // Lines connecting nearby visible dots
       const front = sorted.filter(d => d.z > 80).slice(0, 30)
       ctx!.strokeStyle = 'rgba(108,99,255,0.15)'
       ctx!.lineWidth = 0.5
       for (let i = 0; i < front.length; i++) {
         for (let j = i + 1; j < front.length; j++) {
-          const dx = (cx + front[i].x) - (cx + front[j].x)
-          const dy = (cy - front[i].y) - (cy - front[j].y)
+          const dx = front[i].x - front[j].x
+          const dy = front[i].y - front[j].y
           if (Math.sqrt(dx * dx + dy * dy) < 70) {
             ctx!.beginPath()
             ctx!.moveTo(cx + front[i].x, cy - front[i].y)
@@ -108,7 +138,6 @@ function GlobeCanvas() {
         }
       }
 
-      // Outer ring
       ctx!.beginPath()
       ctx!.arc(cx, cy, R + 2, 0, Math.PI * 2)
       ctx!.strokeStyle = 'rgba(0,229,255,0.2)'
@@ -132,6 +161,7 @@ function GlobeCanvas() {
   )
 }
 
+// ── Hero ───────────────────────────────────────────────────────
 export default function Hero() {
   return (
     <section id="hero" className="relative min-h-screen flex items-center overflow-hidden grid-bg">
@@ -179,10 +209,13 @@ export default function Hero() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1 }}
-            style={{ fontSize: 'clamp(40px, 5vw, 72px)', fontWeight: 800, lineHeight: 1.1, marginBottom: 24 }}
+            style={{ fontSize: 'clamp(40px, 5vw, 72px)', fontWeight: 800, lineHeight: 1.15, marginBottom: 24 }}
           >
             Build Your{' '}
-            <span className="gradient-text">Startup MVP</span>
+            <SlotMachineText
+              words={['Startup MVP', 'SaaS Product', 'AI Platform', 'Automation', 'Next Idea']}
+              interval={2500}
+            />
             <br />in 4 Weeks
           </motion.h1>
 
@@ -269,3 +302,4 @@ export default function Hero() {
     </section>
   )
 }
+
